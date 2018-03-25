@@ -93,6 +93,7 @@ class BEGAN(object):
             self.viz_train_curves = visdom.Visdom(env=self.env_name+'/train_curves', port=self.port)
             self.viz_train_samples = visdom.Visdom(env=self.env_name+'/train_samples', port=self.port)
             self.viz_test_samples = visdom.Visdom(env=self.env_name+'/test_samples', port=self.port)
+            self.viz_interpolations = visdom.Visdom(env=self.env_name+'/interpolations', port=self.port)
             self.win_moc = None
 
     def sample_z(self, batch_size=0, dim=0, dist='uniform'):
@@ -267,8 +268,14 @@ class BEGAN(object):
                         D_loss_fake.data[0],
                         G_loss.data[0]))
 
+                if self.global_iter%500 == 0:
+                    z1 = z[0:1]
+                    z2 = z[1:2]
+                    self.interpolation(z1,z2)
+
                 if self.global_iter%self.lr_step_size == 0:
                     self.scheduler_step()
+
 
             self.save_checkpoint()
             self.sample_img('fixed')
@@ -278,3 +285,24 @@ class BEGAN(object):
             print('epoch {:d}, [{:.2f}s]'.format(self.global_epoch, e_elapsed))
 
         print("[*] Training Finished!")
+
+
+    def interpolation(self, z1, z2, n_step=10):
+        filename = self.output_dir.joinpath('interpolation'+':'+str(self.global_iter)+'.jpg')
+
+        step_size = (z2-z1)/(n_step+1)
+        buff = z1
+        for i in range(1, n_step+1):
+            _next = z1 + step_size*(i)
+            buff = torch.cat([buff, _next], dim=0)
+        buff = torch.cat([buff, z2], dim=0)
+
+        samples = self.unscale(self.G(buff))
+        grid = make_grid(samples.data.cpu(), nrow=n_step+2, padding=1, pad_value=0, normalize=False)
+        save_image(grid, filename=filename)
+        if self.visdom:
+            self.viz_interpolations.image(grid, opts=dict(title=str(filename), factor=2))
+
+
+
+
