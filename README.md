@@ -90,9 +90,7 @@ python main.py --dataset celeba --image_size 64 --batch_size 16 --model_type ski
 ### To Do
 - [x] image size(e.g. 64x64, 128x128)
 - [x] CelebA
-- [ ] learning rate decaying(by 2) when MOC get stucked
 - [ ] interpolation
-- [ ] FID, ICP
 <br>
 
 
