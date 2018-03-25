@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_name', default='main', type=str, help='experiment name')
     parser.add_argument('--visdom', default=True, type=str2bool, help='enable visdom')
     parser.add_argument('--port', default=8097, type=int, help='visdom port number')
-    parser.add_argument('--timestep', default=50, type=int, help='visdom curve time step')
+    parser.add_argument('--timestep', default=200, type=int, help='visdom curve time step')
     parser.add_argument('--output_dir', default='output', type=str, help='image output directory')
 
     # Misc

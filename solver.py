@@ -242,6 +242,12 @@ class BEGAN(object):
                         self.unscale(D_real).data.cpu(),
                         opts=dict(title='D_real:{:d}'.format(self.global_iter)))
 
+                if self.visdom and self.global_iter%5000 == 0:
+                    self.interpolation(self.fixed_z[0:1], self.fixed_z[1:2])
+                    self.sample_img('fixed')
+                    self.sample_img('random')
+                    self.save_checkpoint()
+
                 if self.visdom and self.global_iter%self.timestep == 0:
                     X = torch.Tensor([self.global_iter])
                     if self.win_moc is None:
@@ -268,24 +274,15 @@ class BEGAN(object):
                         D_loss_fake.data[0],
                         G_loss.data[0]))
 
-                if self.global_iter%500 == 0:
-                    z1 = z[0:1]
-                    z2 = z[1:2]
-                    self.interpolation(z1,z2)
-
                 if self.global_iter%self.lr_step_size == 0:
                     self.scheduler_step()
 
 
-            self.save_checkpoint()
-            self.sample_img('fixed')
-            self.sample_img('random')
             e_elapsed = (time.time()-e_elapsed)
             print()
             print('epoch {:d}, [{:.2f}s]'.format(self.global_epoch, e_elapsed))
 
         print("[*] Training Finished!")
-
 
     def interpolation(self, z1, z2, n_step=10):
         filename = self.output_dir.joinpath('interpolation'+':'+str(self.global_iter)+'.jpg')
@@ -302,7 +299,3 @@ class BEGAN(object):
         save_image(grid, filename=filename)
         if self.visdom:
             self.viz_interpolations.image(grid, opts=dict(title=str(filename), factor=2))
-
-
-
-
