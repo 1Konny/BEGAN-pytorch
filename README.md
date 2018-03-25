@@ -91,8 +91,8 @@ python main.py --dataset celeba --image_size 64 --batch_size 16 --model_type ski
 - [x] image size(e.g. 64x64, 128x128)
 - [x] CelebA
 - [ ] interpolation
+- [ ] update CelebA results
 <br>
-
 
 ### References
 1. BEGAN : Boundary Equilibrium Generative Adversarial Networks([arxiv:1703.10717])
