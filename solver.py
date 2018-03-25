@@ -54,6 +54,7 @@ class BEGAN(object):
         self.data_loader = return_data(args)
 
         self.fixed_z = Variable(cuda(self.sample_z(self.sample_num), self.cuda))
+        self.lr_step_size = len(self.data_loader['train'].dataset)//self.batch_size*self.epoch//8
 
     def model_init(self):
         self.D = Discriminator(self.model_type, self.image_size,
@@ -70,8 +71,10 @@ class BEGAN(object):
         self.D_optim = optim.Adam(self.D.parameters(), lr=self.D_lr, betas=(0.5, 0.999))
         self.G_optim = optim.Adam(self.G.parameters(), lr=self.G_lr, betas=(0.5, 0.999))
 
-        self.D_optim_scheduler = lr_scheduler.ExponentialLR(self.D_optim, gamma=0.97)
-        self.G_optim_scheduler = lr_scheduler.ExponentialLR(self.G_optim, gamma=0.97)
+        #self.D_optim_scheduler = lr_scheduler.ExponentialLR(self.D_optim, gamma=0.97)
+        #self.G_optim_scheduler = lr_scheduler.ExponentialLR(self.G_optim, gamma=0.97)
+        self.D_optim_scheduler = lr_scheduler.StepLR(self.D_optim, step_size=1, gamma=0.5)
+        self.G_optim_scheduler = lr_scheduler.StepLR(self.G_optim, step_size=1, gamma=0.5)
 
         if self.load_ckpt:
             self.load_checkpoint()
@@ -179,7 +182,6 @@ class BEGAN(object):
 
     def train(self):
         self.set_mode('train')
-        total_elapsed = time.time()
 
         for e in range(self.epoch):
             self.global_epoch += 1
@@ -265,13 +267,14 @@ class BEGAN(object):
                         D_loss_fake.data[0],
                         G_loss.data[0]))
 
+                if self.global_iter%self.lr_step_size == 0:
+                    self.scheduler_step()
+
             self.save_checkpoint()
             self.sample_img('fixed')
             self.sample_img('random')
-            self.scheduler_step()
             e_elapsed = (time.time()-e_elapsed)
             print()
             print('epoch {:d}, [{:.2f}s]'.format(self.global_epoch, e_elapsed))
 
-        total_elapsed = (time.time()-total_elapsed)
-        print(" [*] Training Finished! [{:.2f}s]".format(total_elapsed))
+        print("[*] Training Finished!")
