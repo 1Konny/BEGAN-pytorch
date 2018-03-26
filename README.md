@@ -79,19 +79,18 @@ python main.py --dataset cifar10 --image_size 32 --batch_size 16 --model_type sk
 <br>
 
 ### Results : CelebA(aligned, 64x64)
-(you can download it [here])
+(you can download CelebA dataset [here])
 ```
-python main.py --dataset celeba --image_size 64 --batch_size 16 --model_type skip_repeat --hidden_dim 64 --n_filter 64 --n_repeat 1
+python main.py --dataset celeba --image_size 64 --batch_size 16 --model_type skip_repeat --hidden_dim 64 --n_filter 64 --n_repeat 2
 ```
 #### fixed generation
 ![celeba_fixed](misc/celeba_fixed.gif)
-<br>
-
-### To Do
-- [x] image size(e.g. 64x64, 128x128)
-- [x] CelebA
-- [ ] interpolation
-- [ ] update CelebA results
+#### random generation
+![celeba_random](misc/celeba_random.gif)
+#### interpoloation
+![celeba_interpolation1](misc/man_to_woman.gif)
+![celeba_interpolation2](misc/woman_to_man.gif)
+![celeba_interpolation3](misc/same_to_same.gif)
 <br>
 
 ### References
