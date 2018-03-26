@@ -43,6 +43,7 @@ class BEGAN(object):
         self.n_repeat = args.n_repeat
         self.image_size = args.image_size
         self.hidden_dim = args.hidden_dim
+        self.fixed_z = Variable(cuda(self.sample_z(self.sample_num), self.cuda))
         self.ckpt_dir = Path(args.ckpt_dir).joinpath(args.env_name)
         if not self.ckpt_dir.exists():
             self.ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +54,6 @@ class BEGAN(object):
         self.dataset = args.dataset
         self.data_loader = return_data(args)
 
-        self.fixed_z = Variable(cuda(self.sample_z(self.sample_num), self.cuda))
         self.lr_step_size = len(self.data_loader['train'].dataset)//self.batch_size*self.epoch//8
 
     def model_init(self):
@@ -159,6 +159,7 @@ class BEGAN(object):
                   'epoch':self.global_epoch,
                   'args':self.args,
                   'win_moc':self.win_moc,
+                  'fixed_z':self.fixed_z.data.cpu(),
                   'model_states':model_states,
                   'optim_states':optim_states}
 
@@ -173,6 +174,8 @@ class BEGAN(object):
             self.global_iter = checkpoint['iter']
             self.global_epoch = checkpoint['epoch']
             self.win_moc = checkpoint['win_moc']
+            self.fixed_z = checkpoint['fixed_z']
+            self.fixed_z = Variable(cuda(self.fixed_z, self.cuda))
             self.G.load_state_dict(checkpoint['model_states']['G'])
             self.D.load_state_dict(checkpoint['model_states']['D'])
             self.G_optim.load_state_dict(checkpoint['optim_states']['G_optim'])
@@ -224,8 +227,6 @@ class BEGAN(object):
                 balance = (self.gamma*D_loss_real - D_loss_fake).data[0]
                 self.Kt = max(min(self.Kt + self.lambda_k*balance, 1.0), 0.0)
 
-                # Measure of Convergence
-                M_global = (D_loss_real.data + abs(balance)).cpu()
 
                 # Visualize process
                 if self.visdom and self.global_iter%1000 == 0:
@@ -249,6 +250,9 @@ class BEGAN(object):
                     self.save_checkpoint()
 
                 if self.visdom and self.global_iter%self.timestep == 0:
+                    # Measure of Convergence
+                    M_global = (D_loss_real.data + abs(balance)).cpu()
+
                     X = torch.Tensor([self.global_iter])
                     if self.win_moc is None:
                         self.win_moc = self.viz_train_curves.line(
@@ -285,6 +289,7 @@ class BEGAN(object):
         print("[*] Training Finished!")
 
     def interpolation(self, z1, z2, n_step=10):
+        self.set_mode('eval')
         filename = self.output_dir.joinpath('interpolation'+':'+str(self.global_iter)+'.jpg')
 
         step_size = (z2-z1)/(n_step+1)
@@ -299,3 +304,16 @@ class BEGAN(object):
         save_image(grid, filename=filename)
         if self.visdom:
             self.viz_interpolations.image(grid, opts=dict(title=str(filename), factor=2))
+
+        self.set_mode('train')
+
+    def random_interpolation(self, n_step=10):
+        self.set_mode('eval')
+        z1 = self.sample_z(1)
+        z1 = Variable(cuda(z1, self.cuda))
+
+        z2 = self.sample_z(1)
+        z2 = Variable(cuda(z2, self.cuda))
+
+        self.interpolation(z1, z2, n_step)
+        self.set_mode('train')
