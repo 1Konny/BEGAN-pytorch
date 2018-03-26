@@ -88,9 +88,9 @@ python main.py --dataset celeba --image_size 64 --batch_size 16 --model_type ski
 #### random generation
 ![celeba_random](misc/celeba_random.gif)
 #### interpoloation
-![celeba_interpolation1](misc/man_to_woman.gif)
-![celeba_interpolation2](misc/woman_to_man.gif)
-![celeba_interpolation3](misc/same_to_same.gif)
+![celeba_interpolation1](misc/man_to_woman.png)
+![celeba_interpolation2](misc/woman_to_man.png)
+![celeba_interpolation3](misc/same_to_same.png)
 <br>
 
 ### References
