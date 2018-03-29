@@ -35,7 +35,12 @@ class BEGAN(object):
         self.global_iter = 0
 
         # Visualization
-        self.visualization_init(args)
+        self.env_name = args.env_name
+        self.visdom = args.visdom
+        self.port = args.port
+        self.timestep = args.timestep
+        self.output_dir = Path(args.output_dir).joinpath(args.env_name)
+        self.visualization_init()
 
         # Network
         self.model_type = args.model_type
@@ -45,8 +50,6 @@ class BEGAN(object):
         self.hidden_dim = args.hidden_dim
         self.fixed_z = Variable(cuda(self.sample_z(self.sample_num), self.cuda))
         self.ckpt_dir = Path(args.ckpt_dir).joinpath(args.env_name)
-        if not self.ckpt_dir.exists():
-            self.ckpt_dir.mkdir(parents=True, exist_ok=True)
         self.load_ckpt = args.load_ckpt
         self.model_init()
 
@@ -76,20 +79,17 @@ class BEGAN(object):
         self.D_optim_scheduler = lr_scheduler.StepLR(self.D_optim, step_size=1, gamma=0.5)
         self.G_optim_scheduler = lr_scheduler.StepLR(self.G_optim, step_size=1, gamma=0.5)
 
+        if not self.ckpt_dir.exists():
+            self.ckpt_dir.mkdir(parents=True, exist_ok=True)
+
         if self.load_ckpt:
             self.load_checkpoint()
 
-    def visualization_init(self, args):
-        self.env_name = args.env_name
-        self.output_dir = Path(args.output_dir).joinpath(args.env_name)
+    def visualization_init(self):
         if not self.output_dir.exists():
             self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        if args.visdom:
-            self.visdom = args.visdom
-            self.port = args.port
-            self.timestep = args.timestep
-
+        if self.visdom:
             self.viz_train_curves = visdom.Visdom(env=self.env_name+'/train_curves', port=self.port)
             self.viz_train_samples = visdom.Visdom(env=self.env_name+'/train_samples', port=self.port)
             self.viz_test_samples = visdom.Visdom(env=self.env_name+'/test_samples', port=self.port)
@@ -243,7 +243,7 @@ class BEGAN(object):
                         self.unscale(D_real).data.cpu(),
                         opts=dict(title='D_real:{:d}'.format(self.global_iter)))
 
-                if self.visdom and self.global_iter%5000 == 0:
+                if self.visdom and self.global_iter%10 == 0:
                     self.interpolation(self.fixed_z[0:1], self.fixed_z[1:2])
                     self.sample_img('fixed')
                     self.sample_img('random')
